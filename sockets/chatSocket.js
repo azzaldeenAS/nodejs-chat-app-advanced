@@ -1,4 +1,4 @@
-const db = require('../config/db');
+const pool = require('../config/db');
 
 const socketUsers = {}; 
 
@@ -12,30 +12,34 @@ module.exports = (io, sessionMiddleware) => {
   io.on('connection', (socket) => {
     const session = socket.request.session;
     
-    socket.on('joinRoom', ({ room }) => {
+    socket.on('joinRoom', async ({ room }) => {
       if (!session || !session.username) return socket.emit('error', 'يجب تسجيل الدخول');
 
       const username = session.username;
       socketUsers[socket.id] = { username, room };
       socket.join(room);
       
-      db.all(`SELECT * FROM messages WHERE room = ? ORDER BY timestamp ASC LIMIT 50`, [room], (err, rows) => {
-        if (err) throw err;
-        socket.emit('messageHistory', rows);
+      try {
+        const result = await pool.query(`SELECT * FROM (SELECT * FROM messages WHERE room = $1 ORDER BY timestamp DESC LIMIT 50) sub ORDER BY timestamp ASC`, [room]);
+        socket.emit('messageHistory', result.rows);
         socket.emit('message', { user: 'النظام', text: `مرحباً بك ${username} في غرفة "${room}"!` });
         socket.broadcast.to(room).emit('message', { user: 'النظام', text: `انضم ${username} إلى المحادثة.` });
         
         io.to(room).emit('roomUsers', { room: room, users: getRoomUsers(room) });
-      });
+      } catch (err) {
+        console.error(err);
+      }
     });
 
-    socket.on('chatMessage', (msg) => {
+    socket.on('chatMessage', async (msg) => {
       const user = socketUsers[socket.id];
       if (user) {
-        db.run(`INSERT INTO messages (room, username, text) VALUES (?, ?, ?)`, [user.room, user.username, msg], function(err) {
-          if (err) return console.error(err.message);
+        try {
+          await pool.query(`INSERT INTO messages (room, username, text) VALUES ($1, $2, $3)`, [user.room, user.username, msg]);
           io.to(user.room).emit('message', { user: user.username, text: msg });
-        });
+        } catch(err) {
+          console.error(err);
+        }
       }
     });
 

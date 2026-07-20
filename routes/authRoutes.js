@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const db = require('../config/db');
+const pool = require('../config/db');
 
 const router = express.Router();
 
@@ -8,24 +8,30 @@ router.post('/signup', async (req, res) => {
   const { username, password } = req.body;
   if(!username || !password) return res.status(400).json({ error: 'الرجاء إدخال جميع الحقول' });
 
-  db.get('SELECT * FROM users WHERE username = ?', [username], async (err, row) => {
-    if (row) return res.status(400).json({ error: 'اسم المستخدم مسجل مسبقاً' });
+  try {
+    const userCheck = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    if (userCheck.rows.length > 0) return res.status(400).json({ error: 'اسم المستخدم مسجل مسبقاً' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    db.run('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword], function(err) {
-      if (err) return res.status(500).json({ error: 'حدث خطأ في الخادم' });
-      req.session.userId = this.lastID;
-      req.session.username = username;
-      res.json({ success: true, username });
-    });
-  });
+    const result = await pool.query('INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id', [username, hashedPassword]);
+    
+    req.session.userId = result.rows[0].id;
+    req.session.username = username;
+    res.json({ success: true, username });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'حدث خطأ في الخادم' });
+  }
 });
 
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   if(!username || !password) return res.status(400).json({ error: 'الرجاء إدخال جميع الحقول' });
 
-  db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
+  try {
+    const userResult = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    const user = userResult.rows[0];
+    
     if (!user) return res.status(400).json({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
 
     const match = await bcrypt.compare(password, user.password);
@@ -34,7 +40,10 @@ router.post('/login', (req, res) => {
     req.session.userId = user.id;
     req.session.username = user.username;
     res.json({ success: true, username: user.username });
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'حدث خطأ في الخادم' });
+  }
 });
 
 router.get('/me', (req, res) => {

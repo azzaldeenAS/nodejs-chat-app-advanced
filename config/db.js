@@ -1,24 +1,11 @@
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 
-const db = new sqlite3.Database('./chat.db', (err) => {
-  if (err) console.error('خطأ في الاتصال بقاعدة البيانات:', err.message);
-  else console.log('📁 متصل بقاعدة بيانات SQLite.');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:ezz-chat-db@db.cdrlsqbojkcjqtnezdwb.supabase.co:5432/postgres',
 });
 
-db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    room TEXT,
-    username TEXT,
-    text TEXT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
-
-  db.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE,
-    password TEXT
-  )`);
+pool.on('error', (err, client) => {
+  console.error('خطأ غير متوقع في قاعدة البيانات', err);
 });
 
-module.exports = db;
+module.exports = pool;
