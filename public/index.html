@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق المراسلة المتقدم</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            height: 85vh;
+            display: flex;
+        }
+        
+        .auth-screen, .room-screen {
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .auth-screen h2, .room-screen h2 { color: #0084ff; margin-bottom: 20px; }
+        .auth-screen form, .room-screen form { width: 100%; max-width: 400px; }
+        input, select {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        button.primary {
+            background: #0084ff;
+            color: #fff;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s;
+        }
+        button.primary:hover { background: #006bce; }
+        
+        .toggle-link {
+            color: #0084ff;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .chat-screen { display: none; width: 100%; flex-direction: row; }
+        .sidebar { width: 250px; background: #2c3e50; color: white; padding: 20px; display: flex; flex-direction: column; }
+        .sidebar h3 { margin-top: 0; font-size: 1.1rem; border-bottom: 1px solid #34495e; padding-bottom: 10px; }
+        .users-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1; }
+        .users-list li { padding: 10px 0; display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
+        .users-list li::before { content: ''; width: 10px; height: 10px; background: #2ecc71; border-radius: 50%; }
+        .logout-btn { background: #e74c3c; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold; }
+
+        .chat-main { flex: 1; display: flex; flex-direction: column; }
+        .chat-header { background: #0084ff; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .chat-header h3 { margin: 0; font-size: 1.1rem; }
+        .chat-header .room-badge { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem;}
+        
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; background: #e5ddd5; display: flex; flex-direction: column; gap: 10px; position: relative; }
+        .message { max-width: 75%; padding: 10px 15px; border-radius: 15px; font-size: 0.95rem; line-height: 1.4; }
+        .message img { max-width: 100%; border-radius: 10px; margin-top: 5px; }
+        .message.system { background: rgba(0,0,0,0.05); color: #555; align-self: center; font-size: 0.8rem; border-radius: 10px; padding: 5px 15px; }
+        .message.other { background: #fff; align-self: flex-start; border-bottom-right-radius: 5px; }
+        .message.me { background: #dcf8c6; align-self: flex-end; border-bottom-left-radius: 5px; }
+        .user-name { font-size: 0.75rem; color: #0084ff; font-weight: bold; margin-bottom: 3px; }
+
+        .typing-indicator { font-size: 0.8rem; color: #888; padding: 5px 20px; background: #e5ddd5; height: 20px; font-style: italic; }
+
+        .chat-input { display: flex; padding: 15px; background: #f0f0f0; border-top: 1px solid #ddd; align-items: center; }
+        .chat-input input[type="text"] { flex: 1; padding: 12px 15px; border: none; border-radius: 25px; outline: none; font-size: 1rem; margin-bottom: 0; }
+        .chat-input .attach-btn { background: #ccc; color: #333; border: none; width: 45px; height: 45px; border-radius: 50%; margin-left: 10px; cursor: pointer; font-size: 1.2rem; display: flex; justify-content: center; align-items: center; }
+        .chat-input .attach-btn:hover { background: #bbb; }
+        .chat-input button[type="submit"] { background: #0084ff; color: #fff; border: none; padding: 12px 20px; margin-right: 10px; border-radius: 25px; cursor: pointer; font-weight: bold; }
+        
+        @media (max-width: 600px) { .sidebar { display: none; } }
+        #file-input { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- شاشة المصادقة -->
+    <div class="auth-screen" id="auth-screen">
+        <h2 id="auth-title">تسجيل الدخول 🔒</h2>
+        <div id="auth-error" class="error-message"></div>
+        <form id="auth-form">
+            <input type="text" id="auth-username" placeholder="اسم المستخدم" required>
+            <input type="password" id="auth-password" placeholder="كلمة المرور" required>
+            <button type="submit" class="primary" id="auth-btn">دخول</button>
+        </form>
+        <div class="toggle-link" id="toggle-auth">ليس لديك حساب؟ إنشاء حساب جديد</div>
+    </div>
+
+    <!-- شاشة اختيار الغرفة (بعد الدخول) -->
+    <div class="room-screen" id="room-screen" style="display: none;">
+        <h2>أهلاً بك <span id="welcome-name"></span> 👋</h2>
+        <form id="join-form">
+            <select id="room" required>
+                <option value="العامة">🌐 الغرفة العامة</option>
+                <option value="المبرمجين">💻 غرفة المبرمجين</option>
+                <option value="الألعاب">🎮 غرفة الألعاب</option>
+            </select>
+            <button type="submit" class="primary">دخول الغرفة المحادثة</button>
+        </form>
+        <button class="logout-btn" id="logout-btn-room" style="max-width: 400px; margin-top: 20px;">تسجيل الخروج</button>
+    </div>
+
+    <!-- شاشة الدردشة -->
+    <div class="chat-screen" id="chat-screen">
+        <div class="sidebar">
+            <h3>المتصلون الآن 🟢</h3>
+            <ul class="users-list" id="users-list"></ul>
+            <button class="logout-btn" id="logout-btn-chat">خروج من النظام</button>
+        </div>
+
+        <div class="chat-main">
+            <div class="chat-header">
+                <h3 id="header-title">المحادثة</h3>
+                <span class="room-badge" id="header-room"></span>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="typing-indicator" id="typing-indicator"></div>
+            
+            <form class="chat-input" id="chat-form">
+                <input type="file" id="file-input" accept="image/*">
+                <button type="button" class="attach-btn" id="attach-btn" title="إرفاق صورة">📎</button>
+                <input type="text" id="msg" placeholder="اكتب رسالتك..." autocomplete="off">
+                <button type="submit">إرسال</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    let socket;
+    let currentUser = null;
+    let isLoginMode = true;
+
+    // DOM Elements
+    const authScreen = document.getElementById('auth-screen');
+    const roomScreen = document.getElementById('room-screen');
+    const chatScreen = document.getElementById('chat-screen');
+    
+    const authForm = document.getElementById('auth-form');
+    const authTitle = document.getElementById('auth-title');
+    const authBtn = document.getElementById('auth-btn');
+    const toggleAuth = document.getElementById('toggle-auth');
+    const authError = document.getElementById('auth-error');
+    
+    const joinForm = document.getElementById('join-form');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatForm = document.getElementById('chat-form');
+    const msgInput = document.getElementById('msg');
+    
+    // التحقق من الجلسة عند تحميل الصفحة
+    fetch('/api/me').then(res => res.json()).then(data => {
+        if(data.loggedIn) {
+            currentUser = data.username;
+            showRoomScreen();
+        }
+    });
+
+    // تبديل بين تسجيل الدخول والإنشاء
+    toggleAuth.addEventListener('click', () => {
+        isLoginMode = !isLoginMode;
+        authTitle.innerText = isLoginMode ? 'تسجيل الدخول 🔒' : 'إنشاء حساب جديد ✨';
+        authBtn.innerText = isLoginMode ? 'دخول' : 'إنشاء حساب';
+        toggleAuth.innerText = isLoginMode ? 'ليس لديك حساب؟ إنشاء حساب جديد' : 'لديك حساب بالفعل؟ تسجيل الدخول';
+        authError.style.display = 'none';
+    });
+
+    // إرسال نموذج المصادقة
+    authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('auth-username').value.trim();
+        const password = document.getElementById('auth-password').value;
+        const endpoint = isLoginMode ? '/api/login' : '/api/signup';
+
+        try {
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            
+            if(data.success) {
+                currentUser = data.username;
+                showRoomScreen();
+            } else {
+                authError.innerText = data.error;
+                authError.style.display = 'block';
+            }
+        } catch (err) {
+            authError.innerText = 'حدث خطأ في الاتصال.';
+            authError.style.display = 'block';
+        }
+    });
+
+    function showRoomScreen() {
+        authScreen.style.display = 'none';
+        roomScreen.style.display = 'flex';
+        document.getElementById('welcome-name').innerText = currentUser;
+    }
+
+    // الانضمام للغرفة
+    joinForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const room = document.getElementById('room').value;
+        
+        roomScreen.style.display = 'none';
+        chatScreen.style.display = 'flex';
+        document.getElementById('header-room').innerText = room;
+
+        // تهيئة Socket
+        socket = io();
+        
+        socket.emit('joinRoom', { room });
+
+        socket.on('messageHistory', (history) => {
+            history.forEach(msg => outputMessage({ user: msg.username, text: msg.text }));
+        });
+
+        socket.on('message', outputMessage);
+
+        socket.on('roomUsers', ({ users }) => {
+            const usersList = document.getElementById('users-list');
+            usersList.innerHTML = '';
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.innerText = user === currentUser ? user + ' (أنت)' : user;
+                usersList.appendChild(li);
+            });
+        });
+
+        // أحداث الكتابة
+        let typingTimeout;
+        msgInput.addEventListener('input', () => {
+            socket.emit('typing');
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => socket.emit('stopTyping'), 1500);
+        });
+
+        socket.on('typing', user => document.getElementById('typing-indicator').innerText = `${user} يكتب... ✍️`);
+        socket.on('stopTyping', () => document.getElementById('typing-indicator').innerText = '');
+
+        // إرسال رسالة
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const msg = msgInput.value.trim();
+            if (!msg) return;
+            socket.emit('chatMessage', msg);
+            socket.emit('stopTyping');
+            msgInput.value = '';
+        });
+
+        // رفع الصورة
+        const fileInput = document.getElementById('file-input');
+        document.getElementById('attach-btn').addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const formData = new FormData();
+            formData.append('image', file);
+            try {
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                if(data.imageUrl) socket.emit('chatMessage', `IMAGE:${data.imageUrl}`);
+            } catch(err) { alert('فشل رفع الصورة.'); }
+            fileInput.value = '';
+        });
+    });
+
+    function outputMessage(message) {
+        const div = document.createElement('div');
+        let contentHtml = message.text.startsWith('IMAGE:') 
+            ? `<img src="${message.text.substring(6)}" />` 
+            : `<div>${message.text}</div>`;
+
+        if (message.user === 'النظام') {
+            div.classList.add('message', 'system');
+            div.innerText = message.text;
+        } else if (message.user === currentUser) {
+            div.classList.add('message', 'me');
+            div.innerHTML = `<div class="user-name">أنت</div>${contentHtml}`;
+        } else {
+            div.classList.add('message', 'other');
+            div.innerHTML = `<div class="user-name">${message.user}</div>${contentHtml}`;
+        }
+        
+        chatMessages.appendChild(div);
+        setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 100);
+    }
+
+    // تسجيل الخروج
+    const logout = async () => {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.reload();
+    };
+    document.getElementById('logout-btn-room').addEventListener('click', logout);
+    document.getElementById('logout-btn-chat').addEventListener('click', logout);
+
+</script>
+</body>
+</html>
