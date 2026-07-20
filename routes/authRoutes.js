@@ -20,7 +20,7 @@ router.post('/signup', async (req, res) => {
     res.json({ success: true, username });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'حدث خطأ في الخادم' });
+    res.status(500).json({ error: 'حدث خطأ في الخادم: ' + err.message });
   }
 });
 
@@ -42,7 +42,7 @@ router.post('/login', async (req, res) => {
     res.json({ success: true, username: user.username });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'حدث خطأ في الخادم' });
+    res.status(500).json({ error: 'حدث خطأ في الخادم: ' + err.message });
   }
 });
 
