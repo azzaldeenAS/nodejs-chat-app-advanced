@@ -9,11 +9,11 @@ async function migrate() {
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255)
+        email VARCHAR(255) UNIQUE,
+        password VARCHAR(255),
+        google_id VARCHAR(255) UNIQUE,
+        avatar_url VARCHAR(500) DEFAULT '/uploads/default-avatar.png'
       );
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255) UNIQUE;
-      ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
     `);
 
     await client.query(`
@@ -37,10 +37,19 @@ async function migrate() {
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) UNIQUE NOT NULL,
         created_by VARCHAR(255) NOT NULL,
+        avatar_url VARCHAR(500) DEFAULT '/uploads/default-group.png',
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
     
+    // إضافة الأعمدة إذا لم تكن موجودة مسبقاً في الجداول الحالية
+    try {
+      await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500) DEFAULT \'/uploads/default-avatar.png\';');
+      await client.query('ALTER TABLE rooms ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(500) DEFAULT \'/uploads/default-group.png\';');
+    } catch(err) {
+      console.log('Columns already exist or error adding them:', err.message);
+    }
+
     // إدخال الغرف الافتراضية إذا لم تكن موجودة
     await client.query(`
       INSERT INTO rooms (name, created_by) VALUES 

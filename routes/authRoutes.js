@@ -36,7 +36,8 @@ router.get('/auth/google/callback', passport.authenticate('google', { session: f
   if (req.user.isNewGoogleUser) {
     req.session.pendingGoogleUser = {
       google_id: req.user.profile.id,
-      email: req.user.profile.emails[0].value
+      email: req.user.profile.emails[0].value,
+      avatar_url: req.user.profile.photos && req.user.profile.photos.length > 0 ? req.user.profile.photos[0].value : '/uploads/default-avatar.png'
     };
     return res.redirect('/complete-profile.html');
   }
@@ -52,11 +53,11 @@ router.post('/complete-google-profile', async (req, res) => {
   if (!username) return res.status(400).json({ error: 'اسم المستخدم مطلوب' });
   
   try {
-    const { google_id, email } = req.session.pendingGoogleUser;
+    const { google_id, email, avatar_url } = req.session.pendingGoogleUser;
     const userCheck = await pool.query('SELECT * FROM users WHERE username = $1 OR email = $2', [username, email]);
     if (userCheck.rows.length > 0) return res.status(400).json({ error: 'اسم المستخدم أو الإيميل مسجل مسبقاً' });
     
-    const result = await pool.query('INSERT INTO users (username, email, google_id) VALUES ($1, $2, $3) RETURNING *', [username, email, google_id]);
+    const result = await pool.query('INSERT INTO users (username, email, google_id, avatar_url) VALUES ($1, $2, $3, $4) RETURNING *', [username, email, google_id, avatar_url]);
     req.session.pendingGoogleUser = null;
     req.session.userId = result.rows[0].id;
     req.session.username = result.rows[0].username;
@@ -109,9 +110,15 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.get('/me', (req, res) => {
+router.get('/me', async (req, res) => {
   if (req.session.username) {
-    res.json({ loggedIn: true, username: req.session.username });
+    try {
+      const userRes = await pool.query('SELECT avatar_url FROM users WHERE id = $1', [req.session.userId]);
+      const avatar_url = userRes.rows[0] ? userRes.rows[0].avatar_url : '/uploads/default-avatar.png';
+      res.json({ loggedIn: true, username: req.session.username, avatar_url });
+    } catch(err) {
+      res.json({ loggedIn: true, username: req.session.username, avatar_url: '/uploads/default-avatar.png' });
+    }
   } else {
     res.json({ loggedIn: false });
   }
@@ -121,7 +128,7 @@ router.get('/users/search', async (req, res) => {
   if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
   const q = req.query.q || '';
   try {
-    const result = await pool.query('SELECT username FROM users WHERE username ILIKE $1 AND id != $2 LIMIT 10', [`%${q}%`, req.session.userId]);
+    const result = await pool.query('SELECT username, avatar_url FROM users WHERE username ILIKE $1 AND id != $2 LIMIT 10', [`%${q}%`, req.session.userId]);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Server error' });

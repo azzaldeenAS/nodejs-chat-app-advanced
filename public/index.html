@@ -222,10 +222,15 @@
         
         .chat-messages { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; position: relative; }
         
-        /* Message styling */
+        .message-wrapper { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 5px; width: 100%; }
+        .message-wrapper.me { flex-direction: row-reverse; }
+        .message-wrapper.system { justify-content: center; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); }
+        .avatar-small { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+        
         .message { max-width: 70%; padding: 12px 18px; border-radius: 18px; font-size: 1rem; line-height: 1.5; position: relative; }
         .message img { max-width: 100%; border-radius: 12px; margin-top: 8px; }
-        .message.system { background: rgba(255,255,255,0.05); color: var(--text-muted); align-self: center; font-size: 0.85rem; border-radius: 12px; padding: 6px 16px; }
+        .message.system { background: rgba(255,255,255,0.05); color: var(--text-muted); align-self: center; font-size: 0.85rem; border-radius: 12px; padding: 6px 16px; text-align: center; }
         .message.other { background: rgba(30, 41, 59, 0.9); align-self: flex-start; border-bottom-right-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid var(--border-color); }
         .message.me { background: linear-gradient(135deg, #0088ff, #0055ff); color: white; align-self: flex-end; border-bottom-left-radius: 4px; box-shadow: 0 4px 15px rgba(0, 85, 255, 0.2); }
         .user-name { font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; opacity: 0.8; }
@@ -340,6 +345,7 @@
 <script>
     let socket;
     let currentUser = null;
+    let currentUserAvatar = '/uploads/default-avatar.png';
     let isLoginMode = true;
 
     // DOM Elements
@@ -362,6 +368,7 @@
     fetch('/api/me').then(res => res.json()).then(data => {
         if(data.loggedIn) {
             currentUser = data.username;
+            currentUserAvatar = data.avatar_url || currentUserAvatar;
             showRoomScreen();
         }
     });
@@ -550,7 +557,7 @@
             friendsList.innerHTML = '';
             users.forEach(u => {
                 const li = document.createElement('li');
-                li.innerText = '👤 ' + u.username;
+                li.innerHTML = `<img src="${u.avatar_url || '/uploads/default-avatar.png'}" class="avatar-small" /> <span>${u.username}</span>`;
                 li.addEventListener('click', () => {
                     initChatScreen('خاص: ' + u.username);
                     socket.emit('joinPrivate', { targetUser: u.username });
@@ -561,23 +568,39 @@
     });
 
     function outputMessage(message) {
+        const wrapper = document.createElement('div');
         const div = document.createElement('div');
+        
         let contentHtml = message.text.startsWith('IMAGE:') 
             ? `<img src="${message.text.substring(6)}" />` 
             : `<div>${message.text}</div>`;
 
         if (message.user === 'النظام') {
+            wrapper.classList.add('message-wrapper', 'system');
             div.classList.add('message', 'system');
             div.innerText = message.text;
+            wrapper.appendChild(div);
         } else if (message.user === currentUser) {
+            wrapper.classList.add('message-wrapper', 'me');
             div.classList.add('message', 'me');
             div.innerHTML = `<div class="user-name">أنت</div>${contentHtml}`;
+            wrapper.appendChild(div);
+            const img = document.createElement('img');
+            img.src = currentUserAvatar;
+            img.className = 'avatar';
+            wrapper.appendChild(img);
         } else {
+            wrapper.classList.add('message-wrapper', 'other');
             div.classList.add('message', 'other');
             div.innerHTML = `<div class="user-name">${message.user}</div>${contentHtml}`;
+            const img = document.createElement('img');
+            img.src = message.avatar_url || '/uploads/default-avatar.png';
+            img.className = 'avatar';
+            wrapper.appendChild(img);
+            wrapper.appendChild(div);
         }
         
-        chatMessages.appendChild(div);
+        chatMessages.appendChild(wrapper);
         setTimeout(() => chatMessages.scrollTop = chatMessages.scrollHeight, 100);
     }
 
