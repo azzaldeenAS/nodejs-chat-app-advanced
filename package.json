@@ -19,7 +19,6 @@
     "localtunnel": "^2.0.2",
     "multer": "^2.2.0",
     "pg": "^8.22.0",
-    "socket.io": "^4.8.3",
-    "sqlite3": "^6.0.1"
+    "socket.io": "^4.8.3"
   }
 }
