@@ -24,6 +24,14 @@ async function migrate() {
         text TEXT NOT NULL,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+      
+      CREATE TABLE IF NOT EXISTS private_messages (
+        id SERIAL PRIMARY KEY,
+        sender_username VARCHAR(255) NOT NULL,
+        receiver_username VARCHAR(255) NOT NULL,
+        text TEXT NOT NULL,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     console.log('✅ تم تجهيز الجداول بنجاح.');

@@ -4,136 +4,258 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ezz المتقدم</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #00e5ff;
+            --primary-hover: #00b3cc;
+            --bg-dark: #0f172a;
+            --bg-panel: rgba(30, 41, 59, 0.7);
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --google-red: #ea4335;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: var(--text-light);
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            overflow: hidden;
         }
         .container {
             width: 100%;
-            max-width: 800px;
-            background: #fff;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 900px;
+            background: var(--bg-panel);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
             overflow: hidden;
             height: 85vh;
             display: flex;
+            transition: all 0.4s ease;
         }
         
         .auth-screen, .room-screen {
             width: 100%;
-            padding: 40px;
+            padding: 50px;
             text-align: center;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            animation: fadeIn 0.6s ease-out;
         }
-        .auth-screen h2, .room-screen h2 { color: #0084ff; margin-bottom: 20px; }
-        .auth-screen form, .room-screen form { width: 100%; max-width: 400px; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .auth-screen h2, .room-screen h2 { 
+            color: var(--primary); 
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            font-weight: 800;
+            text-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+        }
+        .auth-screen form, .room-screen form { width: 100%; max-width: 380px; }
         input, select {
             width: 100%;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-light);
             font-size: 1rem;
+            font-family: 'Cairo', sans-serif;
             box-sizing: border-box;
+            transition: all 0.3s;
         }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+            background: rgba(15, 23, 42, 0.8);
+        }
+        input::placeholder { color: var(--text-muted); }
+        
         button.primary {
-            background: #0084ff;
+            background: linear-gradient(90deg, #00e5ff, #0088ff);
             color: #fff;
             border: none;
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: bold;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            font-family: 'Cairo', sans-serif;
             cursor: pointer;
             width: 100%;
-            transition: background 0.3s;
+            transition: transform 0.2s, box-shadow 0.3s;
+            box-shadow: 0 10px 20px rgba(0, 136, 255, 0.3);
         }
-        button.primary:hover { background: #006bce; }
+        button.primary:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px rgba(0, 136, 255, 0.4);
+        }
         
         button.google-btn {
-            background: #db4437;
-            color: #fff;
-            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-light);
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 1.1rem;
-            font-weight: bold;
+            font-weight: 600;
+            font-family: 'Cairo', sans-serif;
             cursor: pointer;
             width: 100%;
-            margin-top: 10px;
-            transition: background 0.3s;
+            margin-top: 15px;
+            transition: all 0.3s;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             text-decoration: none;
         }
-        button.google-btn:hover { background: #c23321; }
+        button.google-btn:hover { 
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--text-muted);
+        }
+        button.google-btn svg { fill: var(--google-red); }
         
         .toggle-link {
-            color: #0084ff;
+            color: var(--text-muted);
             cursor: pointer;
-            text-decoration: underline;
-            margin-top: 15px;
-            font-size: 0.9rem;
+            margin-top: 25px;
+            font-size: 1rem;
+            transition: color 0.3s;
         }
+        .toggle-link:hover { color: var(--primary); }
         
         .error-message {
-            color: #e74c3c;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
             display: none;
+            width: 100%;
+            max-width: 380px;
         }
 
         .chat-screen { display: none; width: 100%; flex-direction: row; }
-        .sidebar { width: 250px; background: #2c3e50; color: white; padding: 20px; display: flex; flex-direction: column; }
-        .sidebar h3 { margin-top: 0; font-size: 1.1rem; border-bottom: 1px solid #34495e; padding-bottom: 10px; }
+        .sidebar { 
+            width: 280px; 
+            background: rgba(15, 23, 42, 0.8); 
+            border-left: 1px solid var(--border-color);
+            padding: 25px 20px; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .sidebar h3 { margin-top: 0; font-size: 1.2rem; color: var(--text-muted); margin-bottom: 20px; }
+        
+        .search-bar {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Cairo';
+            margin-bottom: 20px;
+        }
+        
         .users-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1; }
-        .users-list li { padding: 10px 0; display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
-        .users-list li::before { content: ''; width: 10px; height: 10px; background: #2ecc71; border-radius: 50%; }
-        .logout-btn { background: #e74c3c; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold; }
-
-        .chat-main { flex: 1; display: flex; flex-direction: column; }
-        .chat-header { background: #0084ff; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .chat-header h3 { margin: 0; font-size: 1.1rem; }
-        .chat-header .room-badge { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem;}
+        .users-list li { 
+            padding: 12px 15px; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            font-size: 1rem;
+            border-radius: 10px;
+            transition: background 0.2s;
+            cursor: pointer;
+            margin-bottom: 5px;
+        }
+        .users-list li:hover { background: rgba(255,255,255,0.05); }
+        .users-list li::before { content: ''; width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
         
-        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; background: #e5ddd5; display: flex; flex-direction: column; gap: 10px; position: relative; }
-        .message { max-width: 75%; padding: 10px 15px; border-radius: 15px; font-size: 0.95rem; line-height: 1.4; }
-        .message img { max-width: 100%; border-radius: 10px; margin-top: 5px; }
-        .message.system { background: rgba(0,0,0,0.05); color: #555; align-self: center; font-size: 0.8rem; border-radius: 10px; padding: 5px 15px; }
-        .message.other { background: #fff; align-self: flex-start; border-bottom-right-radius: 5px; }
-        .message.me { background: #dcf8c6; align-self: flex-end; border-bottom-left-radius: 5px; }
-        .user-name { font-size: 0.75rem; color: #0084ff; font-weight: bold; margin-bottom: 3px; }
+        .logout-btn { 
+            background: rgba(239, 68, 68, 0.1); 
+            color: var(--danger); 
+            border: 1px solid rgba(239, 68, 68, 0.2); 
+            padding: 12px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin-top: 15px; 
+            width: 100%; 
+            font-weight: bold; 
+            font-family: 'Cairo';
+            transition: all 0.3s;
+        }
+        .logout-btn:hover { background: var(--danger); color: white; }
 
-        .typing-indicator { font-size: 0.8rem; color: #888; padding: 5px 20px; background: #e5ddd5; height: 20px; font-style: italic; }
-
-        .chat-input { display: flex; padding: 15px; background: #f0f0f0; border-top: 1px solid #ddd; align-items: center; }
-        .chat-input input[type="text"] { flex: 1; padding: 12px 15px; border: none; border-radius: 25px; outline: none; font-size: 1rem; margin-bottom: 0; }
-        .chat-input .attach-btn { background: #ccc; color: #333; border: none; width: 45px; height: 45px; border-radius: 50%; margin-left: 10px; cursor: pointer; font-size: 1.2rem; display: flex; justify-content: center; align-items: center; }
-        .chat-input .attach-btn:hover { background: #bbb; }
-        .chat-input button[type="submit"] { background: #0084ff; color: #fff; border: none; padding: 12px 20px; margin-right: 10px; border-radius: 25px; cursor: pointer; font-weight: bold; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.4); }
+        .chat-header { 
+            background: rgba(15, 23, 42, 0.8); 
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .chat-header h3 { margin: 0; font-size: 1.3rem; color: var(--primary); }
+        .chat-header .room-badge { background: rgba(0, 229, 255, 0.1); color: var(--primary); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;}
         
-        @media (max-width: 600px) { .sidebar { display: none; } }
+        .chat-messages { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; position: relative; }
+        
+        /* Message styling */
+        .message { max-width: 70%; padding: 12px 18px; border-radius: 18px; font-size: 1rem; line-height: 1.5; position: relative; }
+        .message img { max-width: 100%; border-radius: 12px; margin-top: 8px; }
+        .message.system { background: rgba(255,255,255,0.05); color: var(--text-muted); align-self: center; font-size: 0.85rem; border-radius: 12px; padding: 6px 16px; }
+        .message.other { background: rgba(30, 41, 59, 0.9); align-self: flex-start; border-bottom-right-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid var(--border-color); }
+        .message.me { background: linear-gradient(135deg, #0088ff, #0055ff); color: white; align-self: flex-end; border-bottom-left-radius: 4px; box-shadow: 0 4px 15px rgba(0, 85, 255, 0.2); }
+        .user-name { font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; opacity: 0.8; }
+        .me .user-name { color: #e2e8f0; }
+        .other .user-name { color: var(--primary); }
+
+        .typing-indicator { font-size: 0.85rem; color: var(--primary); padding: 5px 30px; height: 25px; font-style: italic; opacity: 0.8; }
+
+        .chat-input { display: flex; padding: 20px 30px; background: rgba(15, 23, 42, 0.8); border-top: 1px solid var(--border-color); align-items: center; gap: 15px; }
+        .chat-input input[type="text"] { flex: 1; padding: 15px 20px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 30px; outline: none; font-size: 1rem; margin-bottom: 0; color: white; }
+        .chat-input input[type="text"]:focus { border-color: var(--primary); }
+        .chat-input .attach-btn { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border-color); width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; justify-content: center; align-items: center; transition: all 0.3s; }
+        .chat-input .attach-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        .chat-input button[type="submit"] { background: var(--primary); color: #0f172a; border: none; padding: 0 25px; height: 50px; border-radius: 25px; cursor: pointer; font-weight: 800; font-family: 'Cairo'; font-size: 1.1rem; transition: all 0.3s; }
+        .chat-input button[type="submit"]:hover { background: #00b3cc; transform: scale(1.05); }
+        
+        @media (max-width: 768px) { .sidebar { display: none; } .container { height: 100vh; border-radius: 0; } }
         #file-input { display: none; }
         .footer {
             position: fixed;
-            bottom: 10px;
+            bottom: 15px;
             width: 100%;
             text-align: center;
-            font-size: 0.85rem;
-            color: #888;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.3);
+            pointer-events: none;
         }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
@@ -173,8 +295,11 @@
     <!-- شاشة الدردشة -->
     <div class="chat-screen" id="chat-screen">
         <div class="sidebar">
+            <input type="text" id="search-users" class="search-bar" placeholder="ابحث عن أصدقاء... 🔍">
             <h3>المتصلون الآن 🟢</h3>
             <ul class="users-list" id="users-list"></ul>
+            <h3 style="margin-top: 20px;">الأصدقاء 💬</h3>
+            <ul class="users-list" id="friends-list"></ul>
             <button class="logout-btn" id="logout-btn-chat">خروج من النظام</button>
         </div>
 
@@ -283,71 +408,101 @@
     }
 
     // الانضمام للغرفة
+    function initChatScreen(roomName) {
+        roomScreen.style.display = 'none';
+        chatScreen.style.display = 'flex';
+        document.getElementById('header-room').innerText = roomName;
+        chatMessages.innerHTML = ''; // مسح الرسائل القديمة
+        
+        if (!socket) {
+            socket = io();
+
+            socket.on('messageHistory', (history) => {
+                history.forEach(msg => outputMessage({ user: msg.user || msg.username, text: msg.text }));
+            });
+
+            socket.on('message', outputMessage);
+
+            socket.on('roomUsers', ({ users }) => {
+                const usersList = document.getElementById('users-list');
+                usersList.innerHTML = '';
+                users.forEach(user => {
+                    const li = document.createElement('li');
+                    li.innerText = user === currentUser ? user + ' (أنت)' : user;
+                    usersList.appendChild(li);
+                });
+            });
+
+            // أحداث الكتابة
+            let typingTimeout;
+            msgInput.addEventListener('input', () => {
+                socket.emit('typing');
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => socket.emit('stopTyping'), 1500);
+            });
+
+            socket.on('typing', user => document.getElementById('typing-indicator').innerText = `${user} يكتب... ✍️`);
+            socket.on('stopTyping', () => document.getElementById('typing-indicator').innerText = '');
+
+            // إرسال رسالة
+            chatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const msg = msgInput.value.trim();
+                if (!msg) return;
+                socket.emit('chatMessage', msg);
+                socket.emit('stopTyping');
+                msgInput.value = '';
+            });
+
+            // رفع الصورة
+            const fileInput = document.getElementById('file-input');
+            document.getElementById('attach-btn').addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if(!file) return;
+                const formData = new FormData();
+                formData.append('image', file);
+                try {
+                    const res = await fetch('/upload', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if(data.imageUrl) socket.emit('chatMessage', `IMAGE:${data.imageUrl}`);
+                } catch(err) { alert('فشل رفع الصورة.'); }
+                fileInput.value = '';
+            });
+        }
+    }
+
     joinForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const room = document.getElementById('room').value;
-        
-        roomScreen.style.display = 'none';
-        chatScreen.style.display = 'flex';
-        document.getElementById('header-room').innerText = room;
-
-        // تهيئة Socket
-        socket = io();
-        
+        initChatScreen(room);
         socket.emit('joinRoom', { room });
+    });
 
-        socket.on('messageHistory', (history) => {
-            history.forEach(msg => outputMessage({ user: msg.username, text: msg.text }));
-        });
+    // البحث عن مستخدمين
+    const searchUsersInput = document.getElementById('search-users');
+    const friendsList = document.getElementById('friends-list');
 
-        socket.on('message', outputMessage);
-
-        socket.on('roomUsers', ({ users }) => {
-            const usersList = document.getElementById('users-list');
-            usersList.innerHTML = '';
-            users.forEach(user => {
+    searchUsersInput.addEventListener('input', async (e) => {
+        const q = e.target.value.trim();
+        if (!q) {
+            friendsList.innerHTML = '';
+            return;
+        }
+        try {
+            const res = await fetch(`/api/users/search?q=${q}`);
+            const users = await res.json();
+            friendsList.innerHTML = '';
+            users.forEach(u => {
                 const li = document.createElement('li');
-                li.innerText = user === currentUser ? user + ' (أنت)' : user;
-                usersList.appendChild(li);
+                li.innerText = '👤 ' + u.username;
+                li.addEventListener('click', () => {
+                    initChatScreen('خاص: ' + u.username);
+                    socket.emit('joinPrivate', { targetUser: u.username });
+                });
+                friendsList.appendChild(li);
             });
-        });
-
-        // أحداث الكتابة
-        let typingTimeout;
-        msgInput.addEventListener('input', () => {
-            socket.emit('typing');
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => socket.emit('stopTyping'), 1500);
-        });
-
-        socket.on('typing', user => document.getElementById('typing-indicator').innerText = `${user} يكتب... ✍️`);
-        socket.on('stopTyping', () => document.getElementById('typing-indicator').innerText = '');
-
-        // إرسال رسالة
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const msg = msgInput.value.trim();
-            if (!msg) return;
-            socket.emit('chatMessage', msg);
-            socket.emit('stopTyping');
-            msgInput.value = '';
-        });
-
-        // رفع الصورة
-        const fileInput = document.getElementById('file-input');
-        document.getElementById('attach-btn').addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            const formData = new FormData();
-            formData.append('image', file);
-            try {
-                const res = await fetch('/upload', { method: 'POST', body: formData });
-                const data = await res.json();
-                if(data.imageUrl) socket.emit('chatMessage', `IMAGE:${data.imageUrl}`);
-            } catch(err) { alert('فشل رفع الصورة.'); }
-            fileInput.value = '';
-        });
+        } catch (err) { console.error(err); }
     });
 
     function outputMessage(message) {

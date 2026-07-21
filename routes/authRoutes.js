@@ -117,6 +117,17 @@ router.get('/me', (req, res) => {
   }
 });
 
+router.get('/users/search', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
+  const q = req.query.q || '';
+  try {
+    const result = await pool.query('SELECT username FROM users WHERE username ILIKE $1 AND id != $2 LIMIT 10', [`%${q}%`, req.session.userId]);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.post('/logout', (req, res) => {
   req.session.destroy();
   res.json({ success: true });

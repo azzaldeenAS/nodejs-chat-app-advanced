@@ -16,7 +16,7 @@ module.exports = (io, sessionMiddleware) => {
       if (!session || !session.username) return socket.emit('error', 'يجب تسجيل الدخول');
 
       const username = session.username;
-      socketUsers[socket.id] = { username, room };
+      socketUsers[socket.id] = { username, room, isPrivate: false };
       socket.join(room);
       
       try {
@@ -31,12 +31,42 @@ module.exports = (io, sessionMiddleware) => {
       }
     });
 
+    socket.on('joinPrivate', async ({ targetUser }) => {
+      if (!session || !session.username) return;
+      const username = session.username;
+      const room = [username, targetUser].sort().join('_');
+      socketUsers[socket.id] = { username, room, isPrivate: true, targetUser };
+      socket.join(room);
+      
+      try {
+        const result = await pool.query(`
+          SELECT sender_username as user, text, timestamp 
+          FROM (
+            SELECT * FROM private_messages 
+            WHERE (sender_username = $1 AND receiver_username = $2) 
+               OR (sender_username = $2 AND receiver_username = $1)
+            ORDER BY timestamp DESC LIMIT 50
+          ) sub ORDER BY timestamp ASC
+        `, [username, targetUser]);
+        
+        socket.emit('messageHistory', result.rows);
+        socket.emit('message', { user: 'النظام', text: `محادثة خاصة ومؤمنة مع ${targetUser} 🔒` });
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
     socket.on('chatMessage', async (msg) => {
       const user = socketUsers[socket.id];
       if (user) {
         try {
-          await pool.query(`INSERT INTO messages (room, username, text) VALUES ($1, $2, $3)`, [user.room, user.username, msg]);
-          io.to(user.room).emit('message', { user: user.username, text: msg });
+          if (user.isPrivate) {
+            await pool.query(`INSERT INTO private_messages (sender_username, receiver_username, text) VALUES ($1, $2, $3)`, [user.username, user.targetUser, msg]);
+            io.to(user.room).emit('message', { user: user.username, text: msg });
+          } else {
+            await pool.query(`INSERT INTO messages (room, username, text) VALUES ($1, $2, $3)`, [user.room, user.username, msg]);
+            io.to(user.room).emit('message', { user: user.username, text: msg });
+          }
         } catch(err) {
           console.error(err);
         }
@@ -56,9 +86,11 @@ module.exports = (io, sessionMiddleware) => {
     socket.on('disconnect', () => {
       const user = socketUsers[socket.id];
       if (user) {
-        io.to(user.room).emit('message', { user: 'النظام', text: `غادر ${user.username} المحادثة.` });
+        if (!user.isPrivate) {
+          io.to(user.room).emit('message', { user: 'النظام', text: `غادر ${user.username} المحادثة.` });
+          io.to(user.room).emit('roomUsers', { room: user.room, users: getRoomUsers(user.room) });
+        }
         delete socketUsers[socket.id];
-        io.to(user.room).emit('roomUsers', { room: user.room, users: getRoomUsers(user.room) });
       }
     });
   });
