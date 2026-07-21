@@ -18,9 +18,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         if (res.rows.length > 0) {
           return done(null, res.rows[0]);
         }
-        let username = profile.displayName.replace(/\s+/g, '_') + '_' + Math.floor(Math.random()*1000);
-        res = await pool.query('INSERT INTO users (username, google_id) VALUES ($1, $2) RETURNING *', [username, profile.id]);
-        return done(null, res.rows[0]);
+        // إرجاع البروفايل لتكملة البيانات بدلاً من العشوائية
+        return done(null, { isNewGoogleUser: true, profile: profile });
       } catch (err) {
         return done(err, null);
       }
@@ -34,21 +33,50 @@ router.get('/auth/google', (req, res, next) => {
 });
 
 router.get('/auth/google/callback', passport.authenticate('google', { session: false, failureRedirect: '/' }), (req, res) => {
+  if (req.user.isNewGoogleUser) {
+    req.session.pendingGoogleUser = {
+      google_id: req.user.profile.id,
+      email: req.user.profile.emails[0].value
+    };
+    return res.redirect('/complete-profile.html');
+  }
+  
   req.session.userId = req.user.id;
   req.session.username = req.user.username;
   res.redirect('/');
 });
 
+router.post('/complete-google-profile', async (req, res) => {
+  if (!req.session.pendingGoogleUser) return res.status(400).json({ error: 'لا يوجد تسجيل دخول معلق بجوجل' });
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: 'اسم المستخدم مطلوب' });
+  
+  try {
+    const { google_id, email } = req.session.pendingGoogleUser;
+    const userCheck = await pool.query('SELECT * FROM users WHERE username = $1 OR email = $2', [username, email]);
+    if (userCheck.rows.length > 0) return res.status(400).json({ error: 'اسم المستخدم أو الإيميل مسجل مسبقاً' });
+    
+    const result = await pool.query('INSERT INTO users (username, email, google_id) VALUES ($1, $2, $3) RETURNING *', [username, email, google_id]);
+    req.session.pendingGoogleUser = null;
+    req.session.userId = result.rows[0].id;
+    req.session.username = result.rows[0].username;
+    res.json({ success: true, username: result.rows[0].username });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'حدث خطأ في الخادم' });
+  }
+});
+
 router.post('/signup', async (req, res) => {
-  const { username, password } = req.body;
-  if(!username || !password) return res.status(400).json({ error: 'الرجاء إدخال جميع الحقول' });
+  const { username, email, password } = req.body;
+  if(!username || !email || !password) return res.status(400).json({ error: 'الرجاء إدخال جميع الحقول' });
 
   try {
-    const userCheck = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-    if (userCheck.rows.length > 0) return res.status(400).json({ error: 'اسم المستخدم مسجل مسبقاً' });
+    const userCheck = await pool.query('SELECT * FROM users WHERE username = $1 OR email = $2', [username, email]);
+    if (userCheck.rows.length > 0) return res.status(400).json({ error: 'اسم المستخدم أو الإيميل مسجل مسبقاً' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await pool.query('INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id', [username, hashedPassword]);
+    const result = await pool.query('INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id', [username, email, hashedPassword]);
     
     req.session.userId = result.rows[0].id;
     req.session.username = username;

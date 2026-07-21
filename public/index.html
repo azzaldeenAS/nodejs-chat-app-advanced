@@ -145,6 +145,7 @@
         <div id="auth-error" class="error-message"></div>
         <form id="auth-form">
             <input type="text" id="auth-username" placeholder="اسم المستخدم" required>
+            <input type="email" id="auth-email" placeholder="البريد الإلكتروني" style="display: none;">
             <input type="password" id="auth-password" placeholder="كلمة المرور" required>
             <button type="submit" class="primary" id="auth-btn">دخول</button>
             <a href="/api/auth/google" class="google-btn">
@@ -236,6 +237,12 @@
         authTitle.innerText = isLoginMode ? 'تسجيل الدخول 🔒' : 'إنشاء حساب جديد ✨';
         authBtn.innerText = isLoginMode ? 'دخول' : 'إنشاء حساب';
         toggleAuth.innerText = isLoginMode ? 'ليس لديك حساب؟ إنشاء حساب جديد' : 'لديك حساب بالفعل؟ تسجيل الدخول';
+        document.getElementById('auth-email').style.display = isLoginMode ? 'none' : 'block';
+        if(!isLoginMode) {
+            document.getElementById('auth-email').setAttribute('required', 'true');
+        } else {
+            document.getElementById('auth-email').removeAttribute('required');
+        }
         authError.style.display = 'none';
     });
 
@@ -243,14 +250,16 @@
     authForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('auth-username').value.trim();
+        const email = document.getElementById('auth-email').value.trim();
         const password = document.getElementById('auth-password').value;
         const endpoint = isLoginMode ? '/api/login' : '/api/signup';
+        const bodyData = isLoginMode ? { username, password } : { username, email, password };
 
         try {
             const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify(bodyData)
             });
             const data = await res.json();
             
