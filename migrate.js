@@ -32,6 +32,22 @@ async function migrate() {
         text TEXT NOT NULL,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+      
+      CREATE TABLE IF NOT EXISTS rooms (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) UNIQUE NOT NULL,
+        created_by VARCHAR(255) NOT NULL,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    
+    // إدخال الغرف الافتراضية إذا لم تكن موجودة
+    await client.query(`
+      INSERT INTO rooms (name, created_by) VALUES 
+      ('العامة', 'النظام'),
+      ('المبرمجين', 'النظام'),
+      ('الألعاب', 'النظام')
+      ON CONFLICT (name) DO NOTHING;
     `);
 
     console.log('✅ تم تجهيز الجداول بنجاح.');

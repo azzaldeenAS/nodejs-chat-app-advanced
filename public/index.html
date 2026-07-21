@@ -281,15 +281,22 @@
     <!-- شاشة اختيار الغرفة (بعد الدخول) -->
     <div class="room-screen" id="room-screen" style="display: none;">
         <h2>أهلاً بك <span id="welcome-name"></span> 👋</h2>
-        <form id="join-form">
+        
+        <form id="join-form" style="margin-bottom: 20px;">
             <select id="room" required>
-                <option value="العامة">🌐 الغرفة العامة</option>
-                <option value="المبرمجين">💻 غرفة المبرمجين</option>
-                <option value="الألعاب">🎮 غرفة الألعاب</option>
+                <option value="">جاري تحميل الغرف...</option>
             </select>
-            <button type="submit" class="primary">دخول الغرفة المحادثة</button>
+            <button type="submit" class="primary">دخول المجموعة</button>
         </form>
-        <button class="logout-btn" id="logout-btn-room" style="max-width: 400px; margin-top: 20px;">تسجيل الخروج</button>
+
+        <form id="create-room-form" style="padding-top: 20px; border-top: 1px solid var(--border-color);">
+            <h3 style="color: var(--text-muted); font-size: 1rem; margin-bottom: 15px;">أو إنشاء مجموعة جديدة ✨</h3>
+            <div id="room-error" class="error-message"></div>
+            <input type="text" id="new-room-name" placeholder="اسم المجموعة الجديدة..." required>
+            <button type="submit" class="primary" style="background: linear-gradient(90deg, #10b981, #059669);">إنشاء مجموعة</button>
+        </form>
+
+        <button class="logout-btn" id="logout-btn-room" style="max-width: 380px; margin-top: 25px;">تسجيل الخروج</button>
     </div>
 
     <!-- شاشة الدردشة -->
@@ -401,11 +408,56 @@
         }
     });
 
-    function showRoomScreen() {
+    async function showRoomScreen() {
         authScreen.style.display = 'none';
         roomScreen.style.display = 'flex';
         document.getElementById('welcome-name').innerText = currentUser;
+        
+        // Load rooms
+        try {
+            const res = await fetch('/api/rooms');
+            const rooms = await res.json();
+            const roomSelect = document.getElementById('room');
+            roomSelect.innerHTML = '';
+            rooms.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r.name;
+                opt.innerText = '👥 ' + r.name;
+                roomSelect.appendChild(opt);
+            });
+        } catch (err) {
+            console.error('Failed to load rooms');
+        }
     }
+
+    const createRoomForm = document.getElementById('create-room-form');
+    const roomError = document.getElementById('room-error');
+
+    createRoomForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const roomName = document.getElementById('new-room-name').value.trim();
+        if (!roomName) return;
+
+        try {
+            const res = await fetch('/api/rooms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: roomName })
+            });
+            const data = await res.json();
+            if (data.success) {
+                roomError.style.display = 'none';
+                document.getElementById('new-room-name').value = '';
+                showRoomScreen(); // Reload rooms
+            } else {
+                roomError.innerText = data.error;
+                roomError.style.display = 'block';
+            }
+        } catch (err) {
+            roomError.innerText = 'حدث خطأ في الاتصال';
+            roomError.style.display = 'block';
+        }
+    });
 
     // الانضمام للغرفة
     function initChatScreen(roomName) {

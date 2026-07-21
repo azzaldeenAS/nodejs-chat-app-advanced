@@ -128,6 +128,31 @@ router.get('/users/search', async (req, res) => {
   }
 });
 
+router.get('/rooms', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const result = await pool.query('SELECT * FROM rooms ORDER BY id ASC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/rooms', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
+  const { name } = req.body;
+  if (!name || name.trim() === '') return res.status(400).json({ error: 'اسم المجموعة مطلوب' });
+  try {
+    const check = await pool.query('SELECT * FROM rooms WHERE name = $1', [name.trim()]);
+    if (check.rows.length > 0) return res.status(400).json({ error: 'اسم المجموعة موجود مسبقاً' });
+
+    const result = await pool.query('INSERT INTO rooms (name, created_by) VALUES ($1, $2) RETURNING *', [name.trim(), req.session.username]);
+    res.json({ success: true, room: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.post('/logout', (req, res) => {
   req.session.destroy();
   res.json({ success: true });
