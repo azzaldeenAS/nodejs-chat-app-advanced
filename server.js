@@ -25,6 +25,7 @@ const sessionMiddleware = session({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
+app.use(require('passport').initialize());
 
 // تقديم الملفات الثابتة
 app.use(express.static(path.join(__dirname, 'public')));
